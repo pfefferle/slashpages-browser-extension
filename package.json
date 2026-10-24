@@ -1,0 +1,24 @@
+{
+  "name": "slashpages-browser-extension",
+  "version": "0.1.0",
+  "description": "Shows the slash pages of the current site, from its /.well-known/slashpages.",
+  "type": "module",
+  "private": true,
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "eslint src test && web-ext lint --source-dir . --ignore-files node_modules test dist eslint.config.js package-lock.json package.json README.md .github",
+    "start": "web-ext run --source-dir .",
+    "start:chrome": "web-ext run --source-dir . --target chromium",
+    "build": "web-ext build --source-dir . --artifacts-dir dist --overwrite-dest --ignore-files node_modules test dist eslint.config.js package-lock.json package.json README.md .github icons/icon.svg"
+  },
+  "devDependencies": {
+    "@stylistic/eslint-plugin": "^5.0.0",
+    "@xmldom/xmldom": "^0.9.8",
+    "eslint": "^10.11.0",
+    "web-ext": "^10.7.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
