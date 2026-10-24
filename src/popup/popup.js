@@ -58,70 +58,73 @@ async function fetchOpml (tabId, origin) {
 }
 
 /**
- * Requests the slash page paths in the page, a few at a time.
+ * Requests slash page paths in the page, all at the same time.
  *
  * Runs in the tab, so it must not use anything from outside the function.
- * Returns null if the site answers a random path too, then every path
- * would look like a slash page.
  *
  * @param {string}   origin The origin of the site.
  * @param {string[]} names  The slash page names, without the slash.
- * @returns {Promise<Array<{name: string, ok: boolean, url: string}>|null>} The answers.
+ * @returns {Promise<Array<{name: string, ok: boolean, url: string}>>} The answers.
  */
 async function probeInPage (origin, names) {
-  const request = async (path) => {
-    const options = { credentials: 'omit', cache: 'no-cache', redirect: 'follow' }
+  const request = async (name) => {
+    const url = origin + '/' + name
+    const options = { credentials: 'omit', cache: 'no-cache', redirect: 'follow', signal: AbortSignal.timeout(5000) }
 
     try {
-      let response = await fetch(path, { ...options, method: 'HEAD' })
+      let response = await fetch(url, { ...options, method: 'HEAD' })
 
       // Some servers do not allow HEAD.
       if (response.status === 405 || response.status === 501) {
-        response = await fetch(path, options)
+        response = await fetch(url, options)
       }
 
-      return { ok: response.ok, url: response.url }
+      return { name, ok: response.ok, url: response.url }
     } catch {
-      return { ok: false, url: '' }
+      return { name, ok: false, url: '' }
     }
   }
 
-  const check = await request(origin + '/' + Math.random().toString(36).slice(2) + '-no-slash-page')
-  if (check.ok && check.url && new URL(check.url).pathname !== '/') {
-    return null
-  }
-
-  const results = []
-  const queue = names.slice()
-  const worker = async () => {
-    while (queue.length) {
-      const name = queue.shift()
-      results.push({ name, ...(await request(origin + '/' + name)) })
-    }
-  }
-
-  await Promise.all(Array.from({ length: 6 }, worker))
-
-  // Back to list order.
-  return results.sort((a, b) => names.indexOf(a.name) - names.indexOf(b.name))
+  return Promise.all(names.map(request))
 }
 
 /**
  * Looks for the known slash pages of a site by requesting their paths.
  *
- * @param {number} tabId  The tab.
- * @param {string} origin The origin of the site.
+ * The paths are requested in chunks, and every chunk shows what was found
+ * so far, so the list grows while the slow requests are still running.
+ *
+ * @param {number}   tabId   The tab.
+ * @param {string}   origin  The origin of the site.
+ * @param {Function} onPages Called with the pages found so far.
  * @returns {Promise<Array<{text: string, url: string, names: string[]}>|null>} The pages, or null if probing does not work on this site.
  */
-async function probe (tabId, origin) {
-  try {
+async function probe (tabId, origin, onPages) {
+  const run = async (names) => {
     const [result] = await api.scripting.executeScript({
       target: { tabId },
       func: probeInPage,
-      args: [origin, SLASHPAGES.flat()]
+      args: [origin, names]
     })
 
-    return result && result.result ? groupProbes(result.result, origin) : null
+    return result && result.result ? result.result : []
+  }
+
+  try {
+    // A site that answers a random path would make every path look like a slash page.
+    if (groupProbes(await run([Math.random().toString(36).slice(2) + '-no-slash-page']), origin).length) {
+      return null
+    }
+
+    const names = SLASHPAGES.flat()
+    const results = []
+
+    for (let i = 0; i < names.length; i += 12) {
+      results.push(...(await run(names.slice(i, i + 12))))
+      onPages(groupProbes(results, origin))
+    }
+
+    return groupProbes(results, origin)
   } catch {
     return null
   }
@@ -216,7 +219,14 @@ async function main () {
   if (!opml) {
     show(el('p', { class: 'muted' }, 'This site has no /.well-known/slashpages, looking for known slash pages…'))
 
-    const pages = await probe(tab.id, url.origin)
+    const note = 'No /.well-known/slashpages, these were found by trying the known paths.'
+    const pages = await probe(tab.id, url.origin, (found) => {
+      if (found.length) {
+        showPages(found)
+        document.getElementById('content').prepend(el('p', { class: 'muted note' }, note))
+        document.getElementById('content').append(el('p', { class: 'muted note' }, 'Still looking…'))
+      }
+    })
 
     if (!pages) {
       show(el('p', { class: 'muted' }, 'This site has no /.well-known/slashpages, and it answers every path, so the slash pages can not be guessed.'))
@@ -229,7 +239,7 @@ async function main () {
     }
 
     showPages(pages)
-    document.getElementById('content').prepend(el('p', { class: 'muted note' }, 'No /.well-known/slashpages, these were found by trying the known paths.'))
+    document.getElementById('content').prepend(el('p', { class: 'muted note' }, note))
     return
   }
 

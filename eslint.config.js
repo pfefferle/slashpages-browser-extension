@@ -7,7 +7,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
-      globals: { document: 'readonly', window: 'readonly', fetch: 'readonly', URL: 'readonly', globalThis: 'readonly' }
+      globals: { document: 'readonly', window: 'readonly', fetch: 'readonly', URL: 'readonly', globalThis: 'readonly', AbortSignal: 'readonly' }
     },
     rules: {
       '@stylistic/indent': ['error', 2],

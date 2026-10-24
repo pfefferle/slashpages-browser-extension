@@ -5,24 +5,25 @@ import { SLASHPAGES } from '../src/slashpages.js'
 
 const origin = 'https://example.com'
 
-test('lists the paths that answered, grouped by URL', () => {
+test('lists the paths that answered on the same path', () => {
   const pages = groupProbes([
     { name: 'about', ok: true, url: 'https://example.com/about/' },
-    { name: 'changelog', ok: true, url: 'https://example.com/changelog/' },
-    { name: 'log', ok: true, url: 'https://example.com/changelog/' },
-    { name: 'now', ok: false, url: 'https://example.com/now' }
+    { name: 'now', ok: true, url: 'https://example.com/Now' },
+    { name: 'uses', ok: false, url: 'https://example.com/uses' }
   ], origin)
 
   assert.deepEqual(pages, [
     { text: '/about', url: 'https://example.com/about/', names: ['/about'] },
-    { text: '/changelog', url: 'https://example.com/changelog/', names: ['/changelog', '/log'] }
+    { text: '/now', url: 'https://example.com/Now', names: ['/now'] }
   ])
 })
 
-test('skips soft 404s, other sites and broken answers', () => {
+test('skips redirects to other paths, other sites and broken answers', () => {
   const pages = groupProbes([
+    { name: 'hello', ok: true, url: 'https://example.com/micro/hello/' },
+    { name: 'log', ok: true, url: 'https://example.com/changelog/' },
     { name: 'uses', ok: true, url: 'https://example.com/' },
-    { name: 'tip', ok: true, url: 'https://ko-fi.com/example' },
+    { name: 'tip', ok: true, url: 'https://ko-fi.com/tip' },
     { name: 'ai', ok: false, url: '' },
     { name: 'now', ok: true, url: '' }
   ], origin)

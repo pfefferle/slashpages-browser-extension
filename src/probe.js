@@ -1,9 +1,10 @@
 /**
  * Groups the answers of probed slash page paths into pages.
  *
- * A path counts if it answered with a success status and did not end up on
- * the front page (a common soft 404). Paths that end up on the same URL are
- * one page with several names, e.g. /log redirecting to /changelog/.
+ * A path counts if it answered with a success status on the same path, with
+ * or without a trailing slash. Redirects to other paths do not count, e.g.
+ * WordPress redirects an unknown /hello to a post with a similar slug, and
+ * many sites redirect unknown paths to the front page.
  *
  * @param {Array<{name: string, ok: boolean, url: string}>} results The answers, in list order.
  * @param {string} origin The origin of the site.
@@ -21,7 +22,9 @@ export function groupProbes (results, origin) {
       continue
     }
 
-    if (!ok || final.origin !== origin || final.pathname === '/') {
+    const path = final.pathname.replace(/\/$/, '').toLowerCase()
+
+    if (!ok || final.origin !== origin || path !== '/' + name) {
       continue
     }
 
