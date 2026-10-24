@@ -37,6 +37,11 @@ header { margin-bottom: 0.75rem; }
   color: var(--muted);
 }
 
+.note {
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+}
+
 ul {
   margin: 0;
   padding: 0;
