@@ -6,11 +6,11 @@ It reads them from `/.well-known/slashpages`, as described in the [`.well-known/
 
 ## How it works
 
-The extension only does something when you click its button. It then loads `/.well-known/slashpages` of the current site and lists the pages with their names.
+On every site you open, the extension checks once for `/.well-known/slashpages`. If the site has one, the icon is blue and shows the number of slash pages. If not, the icon is grey. The result is kept for 10 minutes per site.
 
-It only asks for `activeTab` and `scripting`, so it has no access to the sites you visit until you click it. It does not collect any data.
+Click the icon and it lists the pages with their names. If the site has no `/.well-known/slashpages`, it tries the known paths from slashpages.net (`/about`, `/now`, …) and lists the ones that exist. This only happens when you click, because it is about 80 requests.
 
-The request runs in the page first, where it is a normal same-origin request. If that does not work, the popup tries it on its own. That works if the site sends `Access-Control-Allow-Origin: *`, as the spec recommends.
+For the check on every site, the extension asks for access to all sites at install. You can turn that off in the browser (Firefox: the add-on → Permissions, Chrome: "Site access"). The icon then stays as it is, and the list still works when you click. The extension does not collect any data.
 
 ## Browsers
 

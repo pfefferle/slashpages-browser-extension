@@ -72,3 +72,20 @@ export function webUrl (url, base) {
     return null
   }
 }
+
+/**
+ * Counts the slash pages of a /.well-known/slashpages OPML document.
+ *
+ * For the badge, in the background, where Chrome has no DOMParser. It counts
+ * the outlines of type "link", without parsing the document.
+ *
+ * @param {string} xml The OPML document.
+ * @returns {number|null} The number of slash pages, or null if it is no OPML.
+ */
+export function countSlashpages (xml) {
+  if (!/<opml[\s>]/.test(xml)) {
+    return null
+  }
+
+  return (xml.match(/<outline\b[^>]*\btype\s*=\s*["']link["'][^>]*>/g) || []).length
+}

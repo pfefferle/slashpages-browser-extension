@@ -28,8 +28,19 @@
     },
     "default_popup": "src/popup/popup.html"
   },
+  "background": {
+    "scripts": [
+      "src/background.js"
+    ],
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
   "permissions": [
     "activeTab",
     "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
   ]
 }

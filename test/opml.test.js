@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { DOMParser as XmlDomParser } from '@xmldom/xmldom'
-import { parseSlashpages, webUrl } from '../src/opml.js'
+import { countSlashpages, parseSlashpages, webUrl } from '../src/opml.js'
 
 // Like the DOMParser of the browser, without logging parse errors.
 class DOMParser extends XmlDomParser {
@@ -62,4 +62,10 @@ test('only allows web URLs', () => {
   assert.equal(webUrl('javascript:alert(1)', base), null)
   assert.equal(webUrl('mailto:me@example.com', base), null)
   assert.equal(webUrl(null, base), null)
+})
+
+test('counts the link outlines for the badge', () => {
+  assert.equal(countSlashpages(opml), 6)
+  assert.equal(countSlashpages('<opml version="2.0"><body></body></opml>'), 0)
+  assert.equal(countSlashpages('<html><body>Not found</body></html>'), null)
 })
