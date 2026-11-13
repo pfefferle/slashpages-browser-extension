@@ -4,7 +4,7 @@
   "description": "Shows the slash pages of the current site, from its /.well-known/slashpages.",
   "type": "module",
   "private": true,
-  "license": "GPL-2.0-or-later",
+  "license": "MIT",
   "scripts": {
     "test": "node --test test/*.test.js",
     "lint": "eslint src test && web-ext lint --source-dir . --ignore-files node_modules test dist eslint.config.js package-lock.json package.json README.md .github amo-metadata.json",

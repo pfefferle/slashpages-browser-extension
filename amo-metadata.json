@@ -9,6 +9,6 @@
     "en-US": "Shows the slash pages (/about, /now, /uses, …) of the current site, from its /.well-known/slashpages."
   },
   "version": {
-    "license": "GPL-2.0-or-later"
+    "license": "MIT"
   }
 }
