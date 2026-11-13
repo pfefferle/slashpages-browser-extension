@@ -1,0 +1,54 @@
+name: Publish to AMO
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check tag matches manifest version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(node -p "require('./manifest.json').version")
+          [ "$tag" = "$manifest" ] || { echo "Tag $tag does not match manifest version $manifest"; exit 1; }
+
+      - name: Test
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        id: build
+        run: npm run build
+
+      - name: Sign and submit
+        run: |
+          npx web-ext sign --source-dir . --artifacts-dir dist --channel listed \
+            --ignore-files node_modules test dist eslint.config.js package-lock.json package.json README.md .github icons/icon.svg amo-metadata.json \
+            --amo-metadata amo-metadata.json \
+            --api-key "${{ secrets.AMO_JWT_ISSUER }}" \
+            --api-secret "${{ secrets.AMO_JWT_SECRET }}"
+
+      - name: Attach .zip and signed .xpi to release
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/*.zip $(ls dist/*.xpi 2>/dev/null) --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
